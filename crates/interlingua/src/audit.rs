@@ -10,8 +10,8 @@
 //! is the previous line's `hash` (zeros for the first line). Editing,
 //! inserting, deleting or reordering any line breaks the chain. Truncating
 //! the end does not, so export the chain head (`seq` and `hash` of the last
-//! line) to storage the router cannot rewrite, the way the estate's
-//! chain-head attestations do.
+//! line) to storage the router cannot rewrite, ideally signed and
+//! timestamped (for example with an RFC 3161 time-stamp authority).
 
 use crate::crypto::sha384;
 use crate::error::Error;
