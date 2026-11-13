@@ -24,7 +24,7 @@ categories = ["cryptography", "encoding", "network-programming"]
 # module under the crypto boundary, so it arrives only as a reviewed bump.
 # Default features stay off so a build picks exactly one backend: the
 # interlingua `non-fips` (default) or `fips` feature.
-aws-lc-rs = { version = "=1.18.1", default-features = false, features = ["alloc"] }
+aws-lc-rs = { version = "=1.19.0", default-features = false, features = ["alloc"] }
 zeroize = { version = "1.9", default-features = false, features = ["alloc"] }
 interlingua = { path = "crates/interlingua", version = "0.1.0", default-features = false }
 
