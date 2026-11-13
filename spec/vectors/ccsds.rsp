@@ -1,0 +1,71 @@
+# interlingua conformance vectors: CCSDS Space Packets (CCSDS 133.0-B-2)
+#
+# Primary header, 6 octets:
+#   version (3) = 000 | type (1) | secondary header flag (1) | APID (11)
+#   sequence flags (2) | packet sequence count (14)
+#   packet data length (16) = octets in the data field - 1
+#
+# expect = accept: encoding the fields gives `packet`, and decoding `packet`
+#          gives the fields. expect = reject: decoding `packet` fails.
+# type: tm (telemetry, 0) | tc (telecommand, 1)
+# flags: continuation (00) | first (01) | last (10) | unsegmented (11)
+
+[accept]
+
+apid = 100
+type = tm
+sec = 0
+flags = unsegmented
+count = 0
+data = 01020304
+packet = 0064c000000301020304
+expect = accept
+
+apid = 2046
+type = tc
+sec = 1
+flags = first
+count = 16383
+data = aa
+packet = 1ffe7fff0000aa
+expect = accept
+
+apid = 0
+type = tm
+sec = 0
+flags = continuation
+count = 1
+data = 00
+packet = 00000001000000
+expect = accept
+
+apid = 1
+type = tm
+sec = 0
+flags = last
+count = 2
+data = ffff
+packet = 000180020001ffff
+expect = accept
+
+[reject]
+
+# Packet version number 001.
+packet = 2064c000000301020304
+expect = reject
+error = Ccsds
+
+# APID 2047 is the idle APID.
+packet = 07ffc000000301020304
+expect = reject
+error = Ccsds
+
+# The length field promises five data octets; three follow.
+packet = 0064c0000004010203
+expect = reject
+error = Ccsds
+
+# Shorter than a primary header.
+packet = 0064c0
+expect = reject
+error = Ccsds

@@ -1,0 +1,4 @@
+module CInterlingua [system] {
+    header "shim.h"
+    export *
+}

@@ -1,0 +1,53 @@
+version: 2
+updates:
+  # Rust dependencies: a week's cooldown for version bumps (a bad publish is
+  # usually pulled within days); security updates are not delayed. AWS-LC is
+  # pinned exactly, so its bumps arrive as their own reviewed pull request.
+  - package-ecosystem: "cargo"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    cooldown:
+      default-days: 7
+    open-pull-requests-limit: 10
+    groups:
+      cargo-minor-and-patch:
+        update-types: ["minor", "patch"]
+
+  # The fuzz targets are their own workspace with their own lockfile.
+  - package-ecosystem: "cargo"
+    directory: "/fuzz"
+    schedule:
+      interval: "weekly"
+    cooldown:
+      default-days: 7
+    groups:
+      fuzz-dependencies:
+        patterns: ["*"]
+
+  # The SHA-pinned actions: commit and version comment, one pull request.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    cooldown:
+      default-days: 7
+    groups:
+      github-actions:
+        patterns: ["*"]
+
+  # The hash-pinned PyPI wheels CI installs (zizmor, typos).
+  - package-ecosystem: "pip"
+    directory: "/.github/workflow-tools"
+    schedule:
+      interval: "weekly"
+    cooldown:
+      default-days: 7
+
+  # The Go binding's toolchain directive (it has no module dependencies).
+  - package-ecosystem: "gomod"
+    directory: "/bindings/go"
+    schedule:
+      interval: "weekly"
+    cooldown:
+      default-days: 7

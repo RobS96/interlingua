@@ -1,0 +1,194 @@
+name: Release
+
+# A release is built only from a signed, annotated tag on main. Each
+# platform archive carries the `il` CLI, the static and shared C ABI
+# libraries, the C header and BUILD-INFO.txt; every archive is covered by a
+# SHA256SUMS file, CycloneDX SBOMs, and one GitHub build-provenance
+# attestation (Sigstore, SLSA provenance), attached to the release as a
+# bundle so downloads verify without GitHub's API.
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  package:
+    name: Package (${{ matrix.label }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - { label: linux-x86_64, os: ubuntu-24.04 }
+          - { label: macos-universal, os: macos-latest }
+    env:
+      LABEL: ${{ matrix.label }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install the stable toolchain
+        run: |
+          rustup toolchain install stable --profile minimal
+          rustup default stable
+
+      # Release builds come from the locked tree alone: no cache is restored.
+      - name: Test before packaging
+        run: cargo test --locked --workspace
+
+      - name: Build
+        run: |
+          set -euo pipefail
+          out="dist/interlingua-${GITHUB_REF_NAME}-${LABEL}"
+          mkdir -p "$out/lib" "$out/include" "$out/bin"
+          if [ "$RUNNER_OS" = macOS ]; then
+            export MACOSX_DEPLOYMENT_TARGET=13.0
+            rustup target add x86_64-apple-darwin aarch64-apple-darwin
+            for t in x86_64-apple-darwin aarch64-apple-darwin; do
+              cargo build --locked --release -p interlingua-cli -p interlingua-ffi --target "$t"
+            done
+            lipo -create -output "$out/bin/il" target/{x86_64,aarch64}-apple-darwin/release/il
+            lipo -create -output "$out/lib/libinterlingua_ffi.a" target/{x86_64,aarch64}-apple-darwin/release/libinterlingua_ffi.a
+            lipo -create -output "$out/lib/libinterlingua_ffi.dylib" target/{x86_64,aarch64}-apple-darwin/release/libinterlingua_ffi.dylib
+          else
+            cargo build --locked --release -p interlingua-cli -p interlingua-ffi
+            cp target/release/il "$out/bin/"
+            cp target/release/libinterlingua_ffi.a target/release/libinterlingua_ffi.so "$out/lib/"
+          fi
+          cp bindings/c/include/interlingua.h "$out/include/"
+          cp README.md LICENSE-MIT LICENSE-APACHE NOTICE DISCLAIMER.md "$out/"
+          {
+            echo "tag: $GITHUB_REF_NAME"
+            echo "commit: $GITHUB_SHA"
+            echo "runner: ${ImageOS:-unknown} ${ImageVersion:-unknown} ($RUNNER_OS $RUNNER_ARCH)"
+            echo "rustc: $(rustc -V)"
+            echo "cargo: $(cargo -V)"
+            if command -v sha256sum >/dev/null; then lock=$(sha256sum Cargo.lock); else lock=$(shasum -a 256 Cargo.lock); fi
+            echo "Cargo.lock-sha256: ${lock%% *}"
+          } > "$out/BUILD-INFO.txt"
+          "$out/bin/il" version
+          "$out/bin/il" vectors check spec/vectors
+
+      - name: Archive and checksums
+        run: |
+          set -euo pipefail
+          cd dist
+          name="interlingua-${GITHUB_REF_NAME}-${LABEL}"
+          tar -czf "$name.tar.gz" "$name"
+          rm -rf "$name"
+          if command -v sha256sum >/dev/null; then sha256sum ./*.tar.gz; else shasum -a 256 ./*.tar.gz; fi > "SHA256SUMS-${LABEL}.txt"
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: dist-${{ matrix.label }}
+          path: dist/
+          if-no-files-found: error
+          retention-days: 7
+
+  sbom:
+    name: SBOMs (CycloneDX)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Generate
+        run: |
+          set -euo pipefail
+          cargo install --locked cargo-cyclonedx@0.5.9
+          cargo cyclonedx --format json --override-filename sbom
+          mkdir -p dist
+          for crate in interlingua interlingua-ffi interlingua-cli; do
+            cp "crates/$crate/sbom.json" "dist/interlingua-${GITHUB_REF_NAME}-${crate}.cdx.json"
+          done
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: dist-sbom
+          path: dist/
+          if-no-files-found: error
+          retention-days: 7
+
+  publish:
+    name: Publish release
+    needs: [package, sbom]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    steps:
+      # Only a signed annotated tag that GitHub verifies, on a commit already
+      # on main. Asked of the API: this job runs nothing from the repository.
+      - name: Tag is signed and on main
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          ref=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$GITHUB_REF_NAME")
+          [ "$(jq -r .object.type <<<"$ref")" = tag ] \
+            || { echo "::error::$GITHUB_REF_NAME is a lightweight tag; a release needs a signed annotated one"; exit 1; }
+          tag=$(gh api "repos/$GITHUB_REPOSITORY/git/tags/$(jq -r .object.sha <<<"$ref")")
+          [ "$(jq -r .verification.verified <<<"$tag")" = true ] \
+            || { echo "::error::the tag's signature is not verified ($(jq -r .verification.reason <<<"$tag"))"; exit 1; }
+          [ "$(jq -r .object.sha <<<"$tag")" = "$GITHUB_SHA" ] \
+            || { echo "::error::the tag does not point at the commit this run built"; exit 1; }
+          state=$(gh api "repos/$GITHUB_REPOSITORY/compare/main...$GITHUB_SHA" --jq .status)
+          case "$state" in
+            identical|behind) echo "$GITHUB_REF_NAME: signed, verified, on main" ;;
+            *) echo "::error::$GITHUB_SHA is not on main (compare status: $state)"; exit 1 ;;
+          esac
+
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: dist-*
+          path: dist
+          merge-multiple: true
+
+      - name: List release files
+        # 2 archives, 2 checksum files, 3 SBOMs.
+        run: ls -l dist && test "$(find dist -type f | wc -l)" -eq 7
+
+      - name: Attest build provenance
+        id: attest
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: dist/interlingua-*
+
+      - name: Attach the attestation bundle
+        env:
+          BUNDLE: ${{ steps.attest.outputs.bundle-path }}
+        run: |
+          set -euo pipefail
+          jq -se 'length == 1 and (.[0].mediaType | startswith("application/vnd.dev.sigstore.bundle"))' "$BUNDLE" >/dev/null \
+            || { echo "::error::expected exactly one Sigstore bundle in $BUNDLE"; exit 1; }
+          jq -c . "$BUNDLE" > "dist/interlingua-${GITHUB_REF_NAME}-provenance.sigstore.json"
+
+      - name: Create draft release, attach files, publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          {
+            echo "See CHANGELOG.md for what changed."
+            echo
+            echo "Verify a download with its SHA256SUMS file and \`gh attestation verify <file> --repo ${GITHUB_REPOSITORY}\` (add \`--bundle interlingua-${GITHUB_REF_NAME}-provenance.sigstore.json\` to use the attached attestation). The \`*.cdx.json\` files are CycloneDX SBOMs covered by the same attestation."
+          } > "$RUNNER_TEMP/notes.md"
+          if draft=$(gh release view "$GITHUB_REF_NAME" --json isDraft --jq .isDraft 2>/dev/null); then
+            [ "$draft" = true ] || { echo "::error::release $GITHUB_REF_NAME is already published"; exit 1; }
+            gh release upload "$GITHUB_REF_NAME" --clobber dist/*
+          else
+            gh release create "$GITHUB_REF_NAME" --draft --verify-tag --title "$GITHUB_REF_NAME" \
+              --notes-file "$RUNNER_TEMP/notes.md" dist/*
+          fi
+          gh release edit "$GITHUB_REF_NAME" --draft=false

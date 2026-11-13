@@ -1,0 +1,20 @@
+# interlingua conformance policy, used by routing.rsp.
+# Domain names are roles in a generic mission, not organisations.
+
+policy version=1 name=conformance max-lifetime=86400 clock-skew=120 seal-at=moderate
+
+domain name=ground-ops    conf=high     integ=high     avail=high     comp=ops,science,tt-c
+domain name=relay-alpha   conf=moderate integ=moderate avail=high     comp=science,tt-c
+domain name=space-segment conf=moderate integ=high     avail=high     comp=tt-c
+       integ-floor=moderate sealed=required
+domain name=science-lab   conf=low      integ=moderate avail=moderate comp=science
+domain name=archive       conf=high     integ=high     avail=low      comp=ops,science,tt-c
+       rate=1 burst=2
+domain name=quarantine    conf=low      integ=low      avail=low
+
+route from=ground-ops  to=relay-alpha   bidirectional=yes
+route from=relay-alpha to=space-segment bidirectional=yes sealed=required
+route from=relay-alpha to=science-lab   max-conf=low bidirectional=yes
+route from=science-lab to=archive
+route from=ground-ops  to=archive       max-bytes=8192 bidirectional=yes
+route from=quarantine  to=ground-ops

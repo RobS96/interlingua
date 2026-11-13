@@ -1,0 +1,13 @@
+# Example constellation policy (examples/constellation/run.sh uses it).
+# Domains are roles in a generic mission, not organisations.
+policy version=1 name=constellation max-lifetime=3600 clock-skew=120 seal-at=moderate
+
+domain name=ground-station conf=high     integ=high     avail=high comp=ops,science,tt-c
+domain name=relay-sat      conf=moderate integ=moderate avail=high comp=science,tt-c
+domain name=spacecraft     conf=moderate integ=high     avail=high comp=tt-c
+       integ-floor=moderate sealed=required
+domain name=science-lab    conf=low      integ=moderate avail=moderate comp=science
+
+route from=ground-station to=relay-sat  bidirectional=yes
+route from=relay-sat      to=spacecraft bidirectional=yes sealed=required
+route from=relay-sat      to=science-lab max-conf=low bidirectional=yes

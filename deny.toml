@@ -1,0 +1,44 @@
+# cargo-deny: advisories, licences, bans and sources for the whole graph.
+# CI runs the full `cargo deny check`; a narrower invocation would stop
+# enforcing the rest.
+
+[graph]
+all-features = false
+
+[advisories]
+version = 2
+yanked = "deny"
+# Ignore entries carry a reason and are reviewed with every dependency bump.
+ignore = []
+
+[licenses]
+version = 2
+# Permissive licences only. AWS-LC itself is ISC / Apache-2.0 with MIT and
+# BSD-3-Clause components (see NOTICE).
+allow = [
+    "MIT",
+    "Apache-2.0",
+    "ISC",
+    "BSD-3-Clause",
+    "MIT-0",
+    "CC0-1.0",
+]
+confidence-threshold = 0.9
+private = { ignore = true }
+
+[bans]
+multiple-versions = "warn"
+wildcards = "deny"
+allow-wildcard-paths = true
+# One cryptographic module: no second TLS/crypto stack may slip in.
+deny = [
+    { crate = "openssl", reason = "AWS-LC is the single crypto module (docs/compliance/FIPS-140-3.md)" },
+    { crate = "openssl-sys", reason = "AWS-LC is the single crypto module" },
+    { crate = "ring", reason = "AWS-LC is the single crypto module" },
+    { crate = "native-tls", reason = "no TLS in the library" },
+]
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]

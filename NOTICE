@@ -1,0 +1,16 @@
+interlingua
+Copyright (c) 2026 RobS96
+Licensed under the MIT License or the Apache License, Version 2.0, at your option.
+
+This product links AWS-LC (https://github.com/aws/aws-lc) through the
+aws-lc-rs and aws-lc-sys crates (ISC, Apache-2.0; with components under MIT
+and BSD-3-Clause licences, some derived from BoringSSL and OpenSSL). Their
+licence texts ship with those crates and in the release archives' SBOMs.
+
+The conformance vectors in spec/vectors/cbor.rsp include examples from
+RFC 8949, Appendix A (IETF Trust; Simplified BSD License as described in the
+IETF Trust Legal Provisions).
+
+Standards documents cited in docs/ (NIST, NSA, CCSDS, NASA, IEEE, ISO/IEC,
+IETF) are referenced, not reproduced. See DISCLAIMER.md: following a public
+standard implies no affiliation with its publisher.

@@ -1,0 +1,28 @@
+[package]
+name = "interlingua"
+description = "Security-first polyglot message fabric: canonical CBOR envelopes signed with ML-DSA-87 and sealed with ML-KEM-1024 + AES-256-GCM, label-based routing between trust domains, and CCSDS space-packet framing."
+readme = "../../README.md"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+keywords.workspace = true
+categories.workspace = true
+
+[features]
+default = ["non-fips"]
+# AWS-LC built from the aws-lc-sys crate (same code base as the FIPS module,
+# not the validated build).
+non-fips = ["aws-lc-rs/aws-lc-sys"]
+# AWS-LC FIPS module (aws-lc-fips-sys). Build with
+# `--no-default-features --features fips`; it needs CMake and Go.
+fips = ["aws-lc-rs/fips"]
+
+[dependencies]
+aws-lc-rs.workspace = true
+zeroize.workspace = true
+
+[lints]
+workspace = true

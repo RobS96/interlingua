@@ -1,0 +1,51 @@
+[package]
+name = "interlingua-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2024"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+interlingua = { path = "../crates/interlingua" }
+
+# Its own workspace and lockfile, so the main build never sees libFuzzer.
+[workspace]
+members = ["."]
+
+[[bin]]
+name = "cbor_decode"
+path = "fuzz_targets/cbor_decode.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "envelope_decode"
+path = "fuzz_targets/envelope_decode.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "policy_parse"
+path = "fuzz_targets/policy_parse.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "ccsds_deframe"
+path = "fuzz_targets/ccsds_deframe.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "router_route"
+path = "fuzz_targets/router_route.rs"
+test = false
+doc = false
+bench = false

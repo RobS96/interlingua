@@ -1,0 +1,10 @@
+/target
+.claude/
+/bindings/go/*.test
+/bindings/swift/.build/
+/bindings/java/out/
+/fuzz/target
+/fuzz/corpus
+/fuzz/artifacts
+/fuzz/coverage
+.DS_Store

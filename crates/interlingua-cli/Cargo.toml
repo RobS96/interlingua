@@ -1,0 +1,25 @@
+[package]
+name = "interlingua-cli"
+description = "The `il` command: keys, envelopes, routing, audit verification, CCSDS framing and conformance vectors."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+publish = false
+
+[[bin]]
+name = "il"
+path = "src/main.rs"
+
+[features]
+default = ["non-fips"]
+non-fips = ["interlingua/non-fips"]
+fips = ["interlingua/fips"]
+
+[dependencies]
+interlingua.workspace = true
+
+[lints]
+workspace = true

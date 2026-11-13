@@ -1,0 +1,26 @@
+cff-version: 1.2.0
+message: "If you use interlingua in research or a publication, please cite it as below."
+title: "interlingua: a security-first polyglot message fabric"
+abstract: >-
+  A canonical, deterministic-CBOR message format signed with ML-DSA-87 and
+  sealed with ML-KEM-1024 and AES-256-GCM (the CNSA 2.0 suite), routed between
+  labelled trust domains under Bell-LaPadula and Biba rules with a hash-chained
+  audit trail, framed as CCSDS Space Packets, with conformance-tested bindings
+  for Rust, C, Swift, Go and Java.
+type: software
+authors:
+  - alias: RobS96
+version: 0.1.0
+license:
+  - MIT
+  - Apache-2.0
+repository-code: "https://github.com/RobS96/interlingua"
+keywords:
+  - post-quantum cryptography
+  - ML-DSA
+  - ML-KEM
+  - CNSA 2.0
+  - deterministic CBOR
+  - interoperability
+  - CCSDS
+  - information flow control

@@ -1,0 +1,410 @@
+# interlingua conformance vectors: strict deterministic CBOR
+#
+# Accepting: every deterministic example in RFC 8949 Appendix A, plus a few
+# ordering cases. Rejecting: the Appendix A examples that are not in
+# deterministic form (indefinite lengths, tags, wider-than-needed floats,
+# NaN payloads, undefined, simple values) and interlingua's strictness cases
+# (docs/SPECIFICATION.md section 3).
+#
+# cbor    input, hex
+# expect  accept: decode succeeds and re-encoding gives the same bytes
+#         reject: decode fails with `error` (the id every binding reports)
+# diag    RFC 8949 diagnostic notation from the reference implementation
+#         (informative: float spelling is not normative, bytes are)
+
+[integers]
+
+cbor = 00
+expect = accept
+diag = 0
+
+cbor = 01
+expect = accept
+diag = 1
+
+cbor = 0a
+expect = accept
+diag = 10
+
+cbor = 17
+expect = accept
+diag = 23
+
+cbor = 1818
+expect = accept
+diag = 24
+
+cbor = 1819
+expect = accept
+diag = 25
+
+cbor = 1864
+expect = accept
+diag = 100
+
+cbor = 1903e8
+expect = accept
+diag = 1000
+
+cbor = 1a000f4240
+expect = accept
+diag = 1000000
+
+cbor = 1b000000e8d4a51000
+expect = accept
+diag = 1000000000000
+
+cbor = 1bffffffffffffffff
+expect = accept
+diag = 18446744073709551615
+
+cbor = 3bffffffffffffffff
+expect = accept
+diag = -18446744073709551616
+
+cbor = 20
+expect = accept
+diag = -1
+
+cbor = 29
+expect = accept
+diag = -10
+
+cbor = 3863
+expect = accept
+diag = -100
+
+cbor = 3903e7
+expect = accept
+diag = -1000
+
+[floats: IEEE 754-2019, preferred width]
+
+cbor = f90000
+expect = accept
+diag = 0.0
+
+cbor = f98000
+expect = accept
+diag = -0.0
+
+cbor = f93c00
+expect = accept
+diag = 1.0
+
+cbor = fb3ff199999999999a
+expect = accept
+diag = 1.1
+
+cbor = f93e00
+expect = accept
+diag = 1.5
+
+cbor = f97bff
+expect = accept
+diag = 65504.0
+
+cbor = fa47c35000
+expect = accept
+diag = 100000.0
+
+cbor = fa7f7fffff
+expect = accept
+diag = 3.4028234663852886e38
+
+cbor = fb7e37e43c8800759c
+expect = accept
+diag = 1e300
+
+cbor = f90001
+expect = accept
+diag = 5.960464477539063e-8
+
+cbor = f90400
+expect = accept
+diag = 6.103515625e-5
+
+cbor = f9c400
+expect = accept
+diag = -4.0
+
+cbor = fbc010666666666666
+expect = accept
+diag = -4.1
+
+cbor = f97c00
+expect = accept
+diag = Infinity
+
+cbor = f97e00
+expect = accept
+diag = NaN
+
+cbor = f9fc00
+expect = accept
+diag = -Infinity
+
+[simple values, strings, containers]
+
+cbor = f4
+expect = accept
+diag = false
+
+cbor = f5
+expect = accept
+diag = true
+
+cbor = f6
+expect = accept
+diag = null
+
+cbor = 40
+expect = accept
+diag = h''
+
+cbor = 4401020304
+expect = accept
+diag = h'01020304'
+
+cbor = 60
+expect = accept
+diag = ""
+
+cbor = 6161
+expect = accept
+diag = "a"
+
+cbor = 6449455446
+expect = accept
+diag = "IETF"
+
+cbor = 62225c
+expect = accept
+diag = "\"\\"
+
+cbor = 62c3bc
+expect = accept
+diag = "\u00fc"
+
+cbor = 63e6b0b4
+expect = accept
+diag = "\u6c34"
+
+cbor = 64f0908591
+expect = accept
+diag = "\ud800\udd51"
+
+cbor = 80
+expect = accept
+diag = []
+
+cbor = 83010203
+expect = accept
+diag = [1, 2, 3]
+
+cbor = 8301820203820405
+expect = accept
+diag = [1, [2, 3], [4, 5]]
+
+cbor = 98190102030405060708090a0b0c0d0e0f101112131415161718181819
+expect = accept
+diag = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25]
+
+cbor = a0
+expect = accept
+diag = {}
+
+cbor = a201020304
+expect = accept
+diag = {1: 2, 3: 4}
+
+cbor = a26161016162820203
+expect = accept
+diag = {"a": 1, "b": [2, 3]}
+
+cbor = 826161a161626163
+expect = accept
+diag = ["a", {"b": "c"}]
+
+cbor = a56161614161626142616361436164614461656145
+expect = accept
+diag = {"a": "A", "b": "B", "c": "C", "d": "D", "e": "E"}
+
+# RFC 8949 orders keys bytewise: 100 (0x1864) before -1 (0x20).
+cbor = a21864002000
+expect = accept
+diag = {100: 0, -1: 0}
+
+[reject: non-shortest integers and lengths]
+
+cbor = 1817
+expect = reject
+error = Cbor/NonCanonicalInteger
+
+cbor = 190017
+expect = reject
+error = Cbor/NonCanonicalInteger
+
+cbor = 1900ff
+expect = reject
+error = Cbor/NonCanonicalInteger
+
+cbor = 1a0000ffff
+expect = reject
+error = Cbor/NonCanonicalInteger
+
+cbor = 1b00000000ffffffff
+expect = reject
+error = Cbor/NonCanonicalInteger
+
+cbor = 5801ff
+expect = reject
+error = Cbor/NonCanonicalInteger
+
+[reject: floats not in preferred width, non-canonical NaN]
+
+cbor = fa3fc00000
+expect = reject
+error = Cbor/NonPreferredFloat
+
+cbor = fb3ff8000000000000
+expect = reject
+error = Cbor/NonPreferredFloat
+
+cbor = fb40f86a0000000000
+expect = reject
+error = Cbor/NonPreferredFloat
+
+cbor = fa7f800000
+expect = reject
+error = Cbor/NonPreferredFloat
+
+cbor = fb7ff0000000000000
+expect = reject
+error = Cbor/NonPreferredFloat
+
+cbor = fa80000000
+expect = reject
+error = Cbor/NonPreferredFloat
+
+cbor = fa7fc00000
+expect = reject
+error = Cbor/NonCanonicalNaN
+
+cbor = fb7ff8000000000000
+expect = reject
+error = Cbor/NonCanonicalNaN
+
+cbor = f97e01
+expect = reject
+error = Cbor/NonCanonicalNaN
+
+cbor = f9fe00
+expect = reject
+error = Cbor/NonCanonicalNaN
+
+cbor = f97c01
+expect = reject
+error = Cbor/NonCanonicalNaN
+
+[reject: indefinite lengths, reserved values, tags, simple values]
+
+cbor = 5f42010243030405ff
+expect = reject
+error = Cbor/IndefiniteLength
+
+cbor = 7f657374726561646d696e67ff
+expect = reject
+error = Cbor/IndefiniteLength
+
+cbor = 9fff
+expect = reject
+error = Cbor/IndefiniteLength
+
+cbor = bf61610161629f0203ffff
+expect = reject
+error = Cbor/IndefiniteLength
+
+cbor = ff
+expect = reject
+error = Cbor/IndefiniteLength
+
+cbor = 1c
+expect = reject
+error = Cbor/ReservedInfo
+
+cbor = c074323031332d30332d32315432303a30343a30305a
+expect = reject
+error = Cbor/UnsupportedTag
+
+cbor = c11a514b67b0
+expect = reject
+error = Cbor/UnsupportedTag
+
+cbor = c249010000000000000000
+expect = reject
+error = Cbor/UnsupportedTag
+
+cbor = d82076687474703a2f2f7777772e6578616d706c652e636f6d
+expect = reject
+error = Cbor/UnsupportedTag
+
+cbor = f7
+expect = reject
+error = Cbor/UnsupportedSimple
+
+cbor = f0
+expect = reject
+error = Cbor/UnsupportedSimple
+
+cbor = f8ff
+expect = reject
+error = Cbor/UnsupportedSimple
+
+[reject: map order, text, structure, limits]
+
+# RFC 7049 "length-first" order is not RFC 8949 deterministic order.
+cbor = a22000186400
+expect = reject
+error = Cbor/UnsortedMapKeys
+
+cbor = a203040102
+expect = reject
+error = Cbor/UnsortedMapKeys
+
+cbor = a2616201616101
+expect = reject
+error = Cbor/UnsortedMapKeys
+
+cbor = a201010102
+expect = reject
+error = Cbor/DuplicateMapKey
+
+cbor = 62c328
+expect = reject
+error = Cbor/InvalidUtf8
+
+# U+D800 (a surrogate) is not a Unicode scalar value, so not UTF-8.
+cbor = 63eda080
+expect = reject
+error = Cbor/InvalidUtf8
+
+cbor = 0000
+expect = reject
+error = Cbor/TrailingBytes
+
+cbor = 18
+expect = reject
+error = Cbor/Truncated
+
+cbor = 5a00010000
+expect = reject
+error = Cbor/Truncated
+
+cbor = 8181818181818181818181818181818181f6
+expect = reject
+error = Cbor/DepthExceeded
+
+cbor = 9b0000000100000000
+expect = reject
+error = Cbor/TooManyItems

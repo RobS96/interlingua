@@ -1,0 +1,74 @@
+# interlingua conformance vectors: security labels (FIPS 199 impacts + compartments)
+#
+# text       label text as a user writes it
+# expect     accept | reject
+# canonical  the canonical text form (fixed order, sorted compartments)
+# cbor       the CBOR form [conf, integ, avail, [compartments]], hex
+#            impacts: 0 = n/a, 1 = low, 2 = moderate, 3 = high
+# error      error id when rejected
+
+[accept]
+
+text = conf=moderate integ=high avail=low comp=tt-c,ops
+expect = accept
+canonical = conf=moderate integ=high avail=low comp=ops,tt-c
+cbor = 8402030182636f70736474742d63
+
+text = conf=n/a integ=low avail=low
+expect = accept
+canonical = conf=n/a integ=low avail=low
+cbor = 8400010180
+
+text = avail=high comp=a integ=high conf=high
+expect = accept
+canonical = conf=high integ=high avail=high comp=a
+cbor = 84030303816161
+
+text = conf=low integ=moderate avail=moderate comp=2026.q4,science
+expect = accept
+canonical = conf=low integ=moderate avail=moderate comp=2026.q4,science
+cbor = 840102028267323032362e713467736369656e6365
+
+[reject]
+
+# FIPS 199 allows "not applicable" for confidentiality only.
+text = conf=low integ=n/a avail=low
+expect = reject
+error = Label
+
+text = conf=low integ=low avail=n/a
+expect = reject
+error = Label
+
+text = conf=low integ=low
+expect = reject
+error = Label
+
+text = conf=secret integ=low avail=low
+expect = reject
+error = Label
+
+text = conf=low integ=low avail=low conf=high
+expect = reject
+error = Label
+
+text = conf=low integ=low avail=low colour=red
+expect = reject
+error = Label
+
+text = conf=low integ=low avail=low comp=a,a
+expect = reject
+error = Label
+
+text = conf=low integ=low avail=low comp=a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q
+expect = reject
+error = Label
+
+# Identifiers are lowercase ASCII (no look-alike Unicode compartments).
+text = conf=low integ=low avail=low comp=Ops
+expect = reject
+error = Identifier
+
+text = conf=low integ=low avail=low comp=öps
+expect = reject
+error = Identifier

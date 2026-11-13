@@ -1,0 +1,54 @@
+[workspace]
+resolver = "3"
+members = [
+    "crates/interlingua",
+    "crates/interlingua-ffi",
+    "crates/interlingua-cli",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+# Edition 2024 needs 1.85; let-chains in the core need 1.88. The MSRV job in
+# .github/workflows/ci.yml proves this number on every change.
+rust-version = "1.88"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/RobS96/interlingua"
+authors = ["RobS96"]
+keywords = ["post-quantum", "cbor", "interoperability", "ccsds", "cnsa"]
+categories = ["cryptography", "encoding", "network-programming"]
+
+[workspace.dependencies]
+# One cryptographic module for every primitive (ML-DSA-87, ML-KEM-1024,
+# AES-256-GCM, HKDF-SHA-384, SHA-384). Exact pin: a new release changes the
+# module under the crypto boundary, so it arrives only as a reviewed bump.
+# Default features stay off so a build picks exactly one backend: the
+# interlingua `non-fips` (default) or `fips` feature.
+aws-lc-rs = { version = "=1.18.1", default-features = false, features = ["alloc"] }
+zeroize = { version = "1.9", default-features = false, features = ["alloc"] }
+interlingua = { path = "crates/interlingua", version = "0.1.0", default-features = false }
+
+[workspace.lints.rust]
+unsafe_code = "deny"
+missing_docs = "warn"
+unreachable_pub = "warn"
+rust_2018_idioms = { level = "warn", priority = -1 }
+
+[workspace.lints.clippy]
+# Panics are bugs in a router: arithmetic and indexing must be proven or checked.
+unwrap_used = "warn"
+expect_used = "warn"
+panic = "warn"
+dbg_macro = "deny"
+todo = "deny"
+undocumented_unsafe_blocks = "deny"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+# Arithmetic overflow aborts the request instead of wrapping silently.
+overflow-checks = true
+# The C ABI turns panics into IL_E_PANIC with catch_unwind, which needs unwinding.
+panic = "unwind"
+strip = "debuginfo"

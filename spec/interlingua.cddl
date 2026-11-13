@@ -1,0 +1,53 @@
+; interlingua wire format, version 1, suite IL1-CNSA2.
+; Concise Data Definition Language (RFC 8610). Normative text:
+; docs/SPECIFICATION.md. Every item is encoded in deterministic CBOR
+; (RFC 8949 section 4.2.1) and decoders reject any other encoding.
+
+envelope = [
+  protected: bstr .cbor header,     ; signed exactly as transmitted
+  unprotected: { 1 => hops },       ; the only field a router changes
+  payload: bstr,                    ; plaintext, or bstr .cbor sealed-payload
+  signature: bstr .size 4627,       ; ML-DSA-87 over sig-structure
+]
+
+hops = 0..255                       ; never above header max_hops
+
+header = {
+  1 => 1,                           ; version
+  2 => 1,                           ; suite: IL1-CNSA2
+  3 => bstr .size 16,               ; id: UUIDv7 (RFC 9562)
+  4 => domain,                      ; src
+  5 => domain,                      ; dst
+  6 => label,
+  7 => uint,                        ; created, Unix milliseconds
+  8 => uint,                        ; expires, Unix milliseconds, > created
+  9 => 1..64,                       ; max_hops
+  10 => media-type,                 ; payload content type
+  11 => bool,                       ; sealed
+  12 => bstr .size 48,              ; signer: SHA-384 of the raw ML-DSA-87 public key
+}
+
+; FIPS 199 security category plus need-to-know compartments.
+label = [
+  confidentiality: impact,
+  integrity: impact-at-least-low,
+  availability: impact-at-least-low,
+  compartments: [* compartment],    ; sorted bytewise, unique, at most 16
+]
+impact = 0..3                       ; 0 n/a, 1 low, 2 moderate, 3 high
+impact-at-least-low = 1..3
+
+domain = tstr .regexp "[a-z]([a-z0-9-]{0,61}[a-z0-9])?"
+compartment = tstr .regexp "[a-z0-9][a-z0-9.\-]{0,31}"
+media-type = tstr .regexp "[a-z0-9][a-z0-9!#$&^_.+\-]{0,62}/[a-z0-9][a-z0-9!#$&^_.+\-]{0,62}"
+
+; Present (CBOR-encoded) in `payload` when header.sealed is true.
+sealed-payload = [
+  recipient: bstr .size 48,         ; SHA-384 of the recipient's ML-KEM-1024 encapsulation key
+  kem-ciphertext: bstr .size 1568,  ; ML-KEM-1024
+  aead: bstr .size (16..16777216),  ; AES-256-GCM ciphertext followed by its 16-byte tag
+]
+
+; What the signature covers, and the AEAD's associated data.
+sig-structure = ["IL1-Sign", protected: bstr, payload: bstr]
+enc-structure = ["IL1-Encrypt", protected: bstr]

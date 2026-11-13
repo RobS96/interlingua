@@ -1,0 +1,195 @@
+name: CI
+
+# Every change proves the same thing on every runner: the Rust reference and
+# each language binding pass the shared conformance vectors, and independent
+# implementations (Go's standard library, Apple CryptoKit, the JDK, OpenSSL)
+# agree with the cryptography. Actions are pinned to commits; toolchains come
+# from the runner image or the tools' own verified installers.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# A newer push to a pull request cancels the older run; main always finishes.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  rust:
+    name: Rust (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, macos-latest]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install the stable toolchain
+        run: |
+          rustup toolchain install stable --profile minimal --component rustfmt --component clippy
+          rustup default stable
+          rustc --version
+
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          save-if: ${{ github.ref == 'refs/heads/main' }}
+
+      - name: Format
+        run: cargo fmt --all --check
+
+      - name: Clippy
+        run: cargo clippy --locked --workspace --all-targets -- -D warnings
+
+      - name: Test (unit, conformance vectors, robustness, doctests)
+        run: cargo test --locked --workspace
+
+      - name: Docs, warnings as errors
+        if: runner.os == 'Linux'
+        env:
+          RUSTDOCFLAGS: -D warnings
+        run: cargo doc --locked --workspace --no-deps --document-private-items
+
+      - name: Conformance vectors through the CLI
+        run: |
+          cargo build --locked -p interlingua-cli
+          target/debug/il vectors check spec/vectors
+
+      # Spelling of source, docs and comments; a prebuilt wheel pinned by
+      # sha256 in .github/workflow-tools/requirements.txt.
+      - name: Typos
+        if: runner.os == 'Linux'
+        run: |
+          set -euo pipefail
+          python3 -m venv "$RUNNER_TEMP/tools"
+          "$RUNNER_TEMP/tools/bin/pip" install --quiet --require-hashes --only-binary=:all: \
+            -r .github/workflow-tools/requirements.txt
+          "$RUNNER_TEMP/tools/bin/typos"
+
+  supply-chain:
+    name: Supply chain (cargo deny + cargo vet)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # Built from crates.io at pinned versions: a new release of either tool
+      # cannot change what the gate checks without a change here.
+      - name: Install cargo-deny + cargo-vet
+        run: cargo install --locked cargo-deny@0.19.9 cargo-vet@0.10.2
+      - name: Advisories, bans, licences, sources
+        run: cargo deny check
+      - name: Provenance (cargo vet)
+        run: cargo vet check --locked
+
+  msrv:
+    name: MSRV (1.88)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install the declared toolchain
+        run: rustup toolchain install 1.88 --profile minimal
+      - name: The workspace on 1.88
+        run: cargo +1.88 check --locked --workspace --all-targets
+
+  fips:
+    name: AWS-LC FIPS module build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install the stable toolchain
+        run: |
+          rustup toolchain install stable --profile minimal
+          rustup default stable
+      # aws-lc-fips-sys builds the FIPS module with CMake and Go (both on the image).
+      - name: Build against the FIPS module and run the vectors
+        run: |
+          cargo build --locked -p interlingua-cli --no-default-features --features fips
+          target/debug/il version | tee /dev/stderr | grep -q 'FIPS module'
+          target/debug/il vectors check spec/vectors
+
+  bindings:
+    name: ${{ matrix.binding }} binding (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { binding: c, os: ubuntu-24.04 }
+          - { binding: c, os: macos-latest }
+          - { binding: go, os: ubuntu-24.04 }
+          - { binding: go, os: macos-latest }
+          - { binding: swift, os: macos-latest }
+          - { binding: java, os: ubuntu-24.04 }
+          - { binding: openssl, os: macos-latest }
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install the stable toolchain
+        run: |
+          rustup toolchain install stable --profile minimal
+          rustup default stable
+
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          save-if: ${{ github.ref == 'refs/heads/main' }}
+
+      - name: C (AddressSanitizer + UBSan)
+        if: matrix.binding == 'c'
+        run: make c
+
+      # GOTOOLCHAIN=auto: the image's Go fetches the go.mod toolchain (1.27.x)
+      # through Go's checksum-database-verified toolchain download.
+      - name: Go (cgo) + Go standard-library cross-checks
+        if: matrix.binding == 'go'
+        run: make go GOTOOLCHAIN=auto
+
+      - name: Swift + Apple CryptoKit cross-checks
+        if: matrix.binding == 'swift'
+        run: |
+          sw_vers
+          swift --version
+          make swift
+
+      # JDK 25 (LTS) from the runner image: FFM API (JEP 454), ML-DSA (JEP 497),
+      # ML-KEM (JEP 496), KDF/HKDF (JEP 510).
+      - name: Java (FFM) + JDK cross-checks
+        if: matrix.binding == 'java'
+        run: |
+          set -euo pipefail
+          if [ -z "${JAVA_HOME_25_X64:-}" ]; then
+            echo "::error::the runner image has no JDK 25 (JAVA_HOME_25_X64 is unset)"
+            exit 1
+          fi
+          export JAVA_HOME="$JAVA_HOME_25_X64" PATH="$JAVA_HOME_25_X64/bin:$PATH"
+          java -version
+          make java
+
+      - name: OpenSSL cross-checks (ML-DSA-87, ML-KEM-1024, HKDF)
+        if: matrix.binding == 'openssl'
+        run: |
+          OPENSSL="$(brew --prefix openssl@3)/bin/openssl"
+          "$OPENSSL" version
+          OPENSSL="$OPENSSL" make openssl

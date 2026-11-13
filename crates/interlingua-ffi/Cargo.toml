@@ -1,0 +1,25 @@
+[package]
+name = "interlingua-ffi"
+description = "Stable C ABI for interlingua (used by the C, Swift, Go and Java bindings)."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+publish = false
+
+[lib]
+name = "interlingua_ffi"
+crate-type = ["cdylib", "staticlib", "rlib"]
+
+[features]
+default = ["non-fips"]
+non-fips = ["interlingua/non-fips"]
+fips = ["interlingua/fips"]
+
+[dependencies]
+interlingua.workspace = true
+
+[lints]
+workspace = true
