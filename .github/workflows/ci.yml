@@ -31,7 +31,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-24.04, macos-latest]
+        os: [ubuntu-24.04, macos-26]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -136,12 +136,12 @@ jobs:
       matrix:
         include:
           - { binding: c, os: ubuntu-24.04 }
-          - { binding: c, os: macos-latest }
+          - { binding: c, os: macos-26 }
           - { binding: go, os: ubuntu-24.04 }
-          - { binding: go, os: macos-latest }
-          - { binding: swift, os: macos-latest }
+          - { binding: go, os: macos-26 }
+          - { binding: swift, os: macos-26 }
           - { binding: java, os: ubuntu-24.04 }
-          - { binding: openssl, os: macos-latest }
+          - { binding: openssl, os: macos-26 }
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:

@@ -9,8 +9,9 @@ Ordered by value; each item ships with specification text, vectors and CI.
    commits, private vulnerability reporting, secret scanning with push
    protection, CodeQL default setup, Dependabot alerts, OpenSSF Best
    Practices registration.
-2. **cargo-vet imports** of published audit sets (Mozilla, Google, Bytecode
-   Alliance, ISRG, Zcash) to replace exemptions with audits.
+2. **cargo-vet audits** for the 30 crates still exempted (imports of seven
+   published audit sets already cover 10 of 40), starting with the build
+   tools; AWS-LC itself is the largest review.
 3. **XCFramework** for iOS and macOS apps (arm64, arm64-simulator, x86_64),
    built in the release workflow.
 4. **Maven Central** publication of the Java binding with the native library

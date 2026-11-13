@@ -9,10 +9,12 @@
   permissive licence allow-list, crates.io as the only source, and bans on a
   second crypto or TLS stack); `cargo vet check` (every crate audited or
   explicitly exempted); dependency review on every pull request.
-* **Honest status**: all 40 crates are currently *exemptions* in
-  `supply-chain/config.toml`, not audits. Importing published audits
-  (Mozilla, Google, Bytecode Alliance, ISRG, Zcash) is the first roadmap item
-  after publication and will convert most of them.
+* **Honest status**: seven published audit sets are imported (Mozilla,
+  Google, Bytecode Alliance, ISRG, Zcash, Embark, Fermyon). They fully audit
+  10 of the 40 crates; the other 30 remain *exemptions* in
+  `supply-chain/config.toml`, chiefly AWS-LC (`aws-lc-rs`, `aws-lc-sys`,
+  `aws-lc-fips-sys`) and its build tools, which no imported set covers.
+  Converting those needs our own `cargo vet certify` audits.
 * **Updated deliberately**: Dependabot groups minor and patch bumps weekly
   with a seven-day cooldown; security updates are not delayed. AWS-LC is
   pinned exactly, so the cryptographic module changes only through its own

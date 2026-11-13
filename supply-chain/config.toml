@@ -4,6 +4,27 @@
 [cargo-vet]
 version = "0.10"
 
+[imports.bytecode-alliance]
+url = "https://raw.githubusercontent.com/bytecodealliance/wasmtime/main/supply-chain/audits.toml"
+
+[imports.embark-studios]
+url = "https://raw.githubusercontent.com/EmbarkStudios/rust-ecosystem/main/audits.toml"
+
+[imports.fermyon]
+url = "https://raw.githubusercontent.com/fermyon/spin/main/supply-chain/audits.toml"
+
+[imports.google]
+url = "https://raw.githubusercontent.com/google/rust-crate-audits/main/audits.toml"
+
+[imports.isrg]
+url = "https://raw.githubusercontent.com/divviup/libprio-rs/main/supply-chain/audits.toml"
+
+[imports.mozilla]
+url = "https://raw.githubusercontent.com/mozilla/supply-chain/main/audits.toml"
+
+[imports.zcash]
+url = "https://raw.githubusercontent.com/zcash/rust-ecosystem/main/supply-chain/audits.toml"
+
 [[exemptions.aho-corasick]]
 version = "1.1.5"
 criteria = "safe-to-deploy"
@@ -20,20 +41,12 @@ criteria = "safe-to-deploy"
 version = "0.45.0"
 criteria = "safe-to-deploy"
 
-[[exemptions.bindgen]]
-version = "0.72.1"
-criteria = "safe-to-deploy"
-
 [[exemptions.bitflags]]
 version = "2.13.2"
 criteria = "safe-to-deploy"
 
 [[exemptions.cc]]
 version = "1.6.0"
-criteria = "safe-to-deploy"
-
-[[exemptions.cexpr]]
-version = "0.6.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.cfg-if]]
@@ -46,10 +59,6 @@ criteria = "safe-to-deploy"
 
 [[exemptions.cmake]]
 version = "0.1.58"
-criteria = "safe-to-deploy"
-
-[[exemptions.dunce]]
-version = "1.0.5"
 criteria = "safe-to-deploy"
 
 [[exemptions.either]]
@@ -100,24 +109,12 @@ criteria = "safe-to-deploy"
 version = "0.2.1"
 criteria = "safe-to-deploy"
 
-[[exemptions.nom]]
-version = "7.1.3"
-criteria = "safe-to-deploy"
-
-[[exemptions.pkg-config]]
-version = "0.3.34"
-criteria = "safe-to-deploy"
-
 [[exemptions.prettyplease]]
 version = "0.2.37"
 criteria = "safe-to-deploy"
 
 [[exemptions.proc-macro2]]
 version = "1.0.107"
-criteria = "safe-to-deploy"
-
-[[exemptions.quote]]
-version = "1.0.47"
 criteria = "safe-to-deploy"
 
 [[exemptions.r-efi]]
@@ -140,26 +137,10 @@ criteria = "safe-to-deploy"
 version = "2.1.3"
 criteria = "safe-to-deploy"
 
-[[exemptions.shlex]]
-version = "1.3.0"
-criteria = "safe-to-deploy"
-
-[[exemptions.shlex]]
-version = "2.0.1"
-criteria = "safe-to-deploy"
-
 [[exemptions.syn]]
 version = "2.0.119"
 criteria = "safe-to-deploy"
 
 [[exemptions.unicode-ident]]
 version = "1.0.26"
-criteria = "safe-to-deploy"
-
-[[exemptions.windows-link]]
-version = "0.2.1"
-criteria = "safe-to-deploy"
-
-[[exemptions.zeroize]]
-version = "1.9.1"
 criteria = "safe-to-deploy"

@@ -7,6 +7,14 @@ changes also bump the format `version` (docs/SPECIFICATION.md section 13).
 
 ## [Unreleased]
 
+### Changed
+
+- cargo-vet imports seven published audit sets (Mozilla, Google, Bytecode
+  Alliance, ISRG, Zcash, Embark, Fermyon): 10 of 40 crates fully audited,
+  30 exempted (was 40).
+- macOS CI and release jobs pinned to `macos-26`, so the Apple CryptoKit
+  ML-DSA / ML-KEM cross-checks always run.
+
 ## [0.1.0] - not yet released
 
 ### Added

@@ -27,7 +27,7 @@ jobs:
       matrix:
         include:
           - { label: linux-x86_64, os: ubuntu-24.04 }
-          - { label: macos-universal, os: macos-latest }
+          - { label: macos-universal, os: macos-26 }
     env:
       LABEL: ${{ matrix.label }}
     steps:
