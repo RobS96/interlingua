@@ -160,8 +160,16 @@ jobs:
         if: matrix.binding == 'c'
         run: make c
 
-      # GOTOOLCHAIN=auto: the image's Go fetches the go.mod toolchain (1.27.x)
-      # through Go's checksum-database-verified toolchain download.
+      # The macOS image has no Go. GitHub's setup-go installs the go.mod
+      # toolchain on both runners, so they take one code path.
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        if: matrix.binding == 'go'
+        with:
+          go-version-file: bindings/go/go.mod
+          cache: false
+
+      # GOTOOLCHAIN=auto: if the installed Go is older than go.mod's toolchain,
+      # Go fetches it through its checksum-database-verified download.
       - name: Go (cgo) + Go standard-library cross-checks
         if: matrix.binding == 'go'
         run: make go GOTOOLCHAIN=auto
