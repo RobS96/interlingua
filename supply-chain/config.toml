@@ -34,12 +34,14 @@ version = "0.14.2"
 criteria = "safe-to-deploy"
 
 [[exemptions.aws-lc-rs]]
-version = "1.18.1"
+version = "1.19.0"
 criteria = "safe-to-deploy"
+notes = "Not a code audit. Bump from 1.18.1 reviewed 2026-11-14 (PR #1): 1.18.2 and 1.19.0 release notes, the [features] table, and the diffs of the modules interlingua calls. kem, hkdf and rand are unchanged; aead, digest, hmac and signature change only deprecation metadata; PqdsaKeyPair gains Clone over a shared, reference-counted key."
 
 [[exemptions.aws-lc-sys]]
-version = "0.45.0"
+version = "0.47.0"
 criteria = "safe-to-deploy"
+notes = "Not a code audit. Bump from 0.45.0 reviewed 2026-11-14 (PR #1): the bundled AWS-LC moves from v5.7.0 to v5.12.0 (release notes read; includes the ML-KEM x86-64 BMI2 gate, aws-lc#3596). Build-script diffs read: no new network or process execution. System-library auto-detection is off for this repository (.cargo/config.toml)."
 
 [[exemptions.bitflags]]
 version = "2.13.2"
