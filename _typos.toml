@@ -8,3 +8,5 @@ extend-exclude = ["spec/vectors/*", "*.lock", "LICENSE-*"]
 ndb = "ndb"
 # Biba integrity model.
 biba = "biba"
+# CBOR Object Signing and Encryption (RFC 9052), cited in the specification.
+cose = "cose"
