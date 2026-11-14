@@ -184,4 +184,6 @@ Bundle Protocol adapter, hybrid KEM suite, XCFramework, Maven Central).
 ## License
 
 Dual-licensed under [MIT](LICENSE-MIT) or [Apache-2.0](LICENSE-APACHE), at
-your option. Third-party notices: [NOTICE](NOTICE).
+your option. The same two texts are also in [LICENSES/](LICENSES/), the
+[REUSE](https://reuse.software/spec/) layout that license scanners look for.
+Third-party notices: [NOTICE](NOTICE).

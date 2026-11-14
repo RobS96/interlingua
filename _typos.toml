@@ -1,7 +1,7 @@
 # typos (https://github.com/crate-ci/typos): words that are right as written.
 [files]
 # Hex test data, keys and generated vectors are not prose.
-extend-exclude = ["spec/vectors/*", "*.lock", "LICENSE-*"]
+extend-exclude = ["spec/vectors/*", "*.lock", "LICENSE-*", "LICENSES/*"]
 
 [default.extend-words]
 # Plan 9's network database format.
