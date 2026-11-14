@@ -2,6 +2,7 @@
 
 [![CI](https://github.com/RobS96/interlingua/actions/workflows/ci.yml/badge.svg)](https://github.com/RobS96/interlingua/actions/workflows/ci.yml)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/RobS96/interlingua/badge)](https://scorecard.dev/viewer/?uri=github.com/RobS96/interlingua)
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/16678/badge)](https://www.bestpractices.dev/projects/16678)
 [![License: MIT OR Apache-2.0](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue.svg)](#license)
 [![Rust 2024](https://img.shields.io/badge/rust-2024-orange.svg)](https://www.rust-lang.org)
 
